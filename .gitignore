@@ -1,0 +1,16 @@
+#IDEA
+*.ipr
+*.iws
+.idea
+
+#SCALA
+target
+
+#OS X
+.DS_Store
+
+#SBT
+project/project
+
+#DATA FILES
+*.txt

@@ -1,23 +1,18 @@
 package app
 
-import java.util.concurrent.TimeUnit
+class BlockingStringSearchRunner(times: Long) {
 
-
-class BlockingStringSearchRunner {
+  val buffer = scala.collection.mutable.Buffer.empty[Long]
 
   def search(sub: String, input: String): Unit = {
-    val nanoStart = System.nanoTime()
-
-    val found = input.contains(sub)
-
-    val delta = System.nanoTime() - nanoStart
-    val deltaMillis = TimeUnit.NANOSECONDS.toMillis(delta)
-
-    println("Finished in " + deltaMillis + " ms (" + delta + "ns)")
-    if (found) {
-      println("Found!")
-    } else {
-      println("Not found!")
+    0L until times foreach { _ =>
+      val nanoStart = System.nanoTime()
+      val found = input contains sub
+      val delta = System.nanoTime() - nanoStart
+      buffer += delta
     }
+
+    val avgDelta = buffer.sum / buffer.size
+    println("" + input.length + " " + avgDelta)
   }
 }

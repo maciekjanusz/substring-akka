@@ -2,11 +2,9 @@ package app
 
 import akka.actor.{Actor, ActorLogging, Props}
 
-class ConcurrentStringSearchRunner(times: Int) extends Actor with ActorLogging {
+class ConcurrentStringSearchRunner extends Actor with ActorLogging {
 
-  val buffer = scala.collection.mutable.Buffer.empty[Long]
   var fails = 0
-  var nanoStart: Long = 0
 
   override def receive: Receive = idle
 
@@ -14,39 +12,28 @@ class ConcurrentStringSearchRunner(times: Int) extends Actor with ActorLogging {
     case msg: Run =>
       import msg._
 
-      nanoStart = System.nanoTime() // READY STEADY
-
-      context.become(searching(input.size, msg))
+      context.become(searching(input.size))
       input foreach {
         chunk =>
           context.actorOf(Props[StringSearchActor]) ! Search(sub, chunk)
       }
   }
 
-  def searching(n: Int, msg: Any): Receive = {
+  def searching(n: Int): Receive = {
     case result: Boolean => result match {
       case true =>
-        reset(found = true, msg)
+        reset(found = true)
       case false =>
         fails += 1
-        if (fails == n) reset(found = false, msg)
+        if (fails == n) reset(found = false)
     }
   }
 
-  def reset(found: Boolean, msg: Any): Unit = {
-    val delta = System.nanoTime() - nanoStart
+  def reset(found: Boolean): Unit = {
+    log.info("Result: " + found)
     context.children.foreach(child => context.stop(child))
     context.become(idle)
-    fails = 0
-    buffer += delta
-
-    if (buffer.size == times) {
-      val avgDeltaNs = buffer.sum / buffer.size
-      log.info("" + avgDeltaNs)
-      context.system.terminate()
-    } else {
-      self ! msg // restart
-    }
+    context.system.terminate()
   }
 }
 

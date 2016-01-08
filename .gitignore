@@ -1,10 +1,13 @@
 #IDEA
+*.iml
 *.ipr
 *.iws
 .idea
+out
 
 #SCALA
 target
+*.class
 
 #OS X
 .DS_Store
@@ -12,5 +15,4 @@ target
 #SBT
 project/project
 
-#DATA FILES
 *.txt

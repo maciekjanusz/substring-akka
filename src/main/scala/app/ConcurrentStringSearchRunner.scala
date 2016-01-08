@@ -2,6 +2,21 @@ package app
 
 import akka.actor.{Actor, ActorLogging, Props}
 
+case class Run(sub: String, input: Seq[String])
+
+case class Search(sub: String, input: String)
+
+class StringSearchActor extends Actor with ActorLogging {
+
+  override def receive: Receive = {
+    case Search(sub, input) =>
+      // run the contains method, stop self and return result to parent
+      val result = input contains sub
+      context.stop(self)
+      sender ! result
+  }
+}
+
 class ConcurrentStringSearchRunner extends Actor with ActorLogging {
 
   var fails = 0
@@ -11,7 +26,7 @@ class ConcurrentStringSearchRunner extends Actor with ActorLogging {
   def idle: Receive = {
     case msg: Run =>
       import msg._
-
+      // create processing actor for each chunk and await results
       context.become(searching(input.size))
       input foreach {
         chunk =>
@@ -31,22 +46,9 @@ class ConcurrentStringSearchRunner extends Actor with ActorLogging {
 
   def reset(found: Boolean): Unit = {
     log.info("Result: " + found)
+    // cleanup and terminate
     context.children.foreach(child => context.stop(child))
     context.become(idle)
     context.system.terminate()
-  }
-}
-
-case class Run(sub: String, input: Seq[String])
-
-case class Search(sub: String, input: String)
-
-class StringSearchActor extends Actor with ActorLogging {
-
-  override def receive: Receive = {
-    case Search(sub, input) =>
-      val result = input contains sub
-      context.stop(self)
-      sender ! result
   }
 }
